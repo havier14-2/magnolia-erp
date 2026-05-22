@@ -1,0 +1,82 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold m-0">
+        <i class="bi bi-journal-bookmark-fill me-2" style="color: var(--accent);"></i>
+        Escandallos y Recetas (La Carta)
+    </h2>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="input-group">
+            <span class="input-group-text" style="background-color: var(--bg-surface); border-color: var(--border); color: var(--text-secondary);">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="buscadorRecetas" class="form-control" placeholder="Buscar producto de la carta..." style="background-color: var(--bg-surface); border-color: var(--border); color: var(--text-primary);">
+        </div>
+    </div>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+        <table class="table align-middle table-hover m-0" id="tablaRecetas">
+            <thead style="position: sticky; top: 0; background-color: var(--bg-surface); z-index: 1;">
+                <tr>
+                    <th>Producto de la Carta</th>
+                    <th class="text-end">Costo Producción</th>
+                    <th class="text-end">Precio Venta</th>
+                    <th class="text-end">Margen (CLP)</th>
+                    <th class="text-center">Configurar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for receta in recetas %}
+                <tr>
+                    <td class="fw-bold name-receta">{{ receta.nombre_producto }}</td>
+                    
+                    <td class="text-end text-muted">${{ receta.costo_bd|floatformat:0|intcomma }}</td>
+                    
+                    <td class="text-end fw-bold text-primary">${{ receta.precio_venta|intcomma }}</td>
+                    
+                    <td class="text-end fw-bold {% if receta.margen_bd > 0 %}text-success{% elif receta.margen_bd < 0 %}text-danger{% else %}text-muted{% endif %}">
+                        ${{ receta.margen_bd|floatformat:0|intcomma }}
+                    </td>
+                    
+                    <td class="text-center">
+                        <a href="{% url 'receta_detalle' receta.pk %}" class="btn btn-sm btn-magnolia py-1">
+                            <i class="bi bi-gear-fill me-1"></i> Receta
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        No hay productos cargados en la carta.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const buscador = document.getElementById("buscadorRecetas");
+    const filas = document.querySelectorAll("#tablaRecetas tbody tr");
+
+    buscador.addEventListener("keyup", function() {
+        const txt = this.value.toLowerCase();
+        filas.forEach(f => {
+            const cell = f.querySelector(".name-receta");
+            if(cell) {
+                f.style.display = cell.textContent.toLowerCase().includes(txt) ? "" : "none";
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

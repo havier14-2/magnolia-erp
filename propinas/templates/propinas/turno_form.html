@@ -1,0 +1,74 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold mt-2">
+        <i class="bi bi-calendar-plus me-2" style="color: var(--accent);"></i>
+        Apertura de Turno (Propinas)
+    </h2>
+    <p style="color: var(--text-secondary);">Ingresa los montos totales recaudados antes de asignar al personal.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card-custom">
+            {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Error:</strong> Por favor corrige los siguientes problemas:
+        <ul>
+            {% for field, errors in form.errors.items %}
+                <li>{{ field }}: {{ errors|striptags }}</li>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">Fecha</label>
+                        {{ form.fecha }}
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.fecha.errors }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">Tipo de Turno</label>
+                        {{ form.tipo }}
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.tipo.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">Propinas FUDO (Sistema)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-currency-dollar"></i></span>
+                            {{ form.propinas_sistema }}
+                        </div>
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.propinas_sistema.errors }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">Propinas en Efectivo</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-currency-dollar"></i></span>
+                            {{ form.efectivo }}
+                        </div>
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.efectivo.errors }}</div>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border);">
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-magnolia px-4 py-2 fw-bold">
+                        <i class="bi bi-arrow-right-circle-fill me-2"></i>Ir a Reparto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

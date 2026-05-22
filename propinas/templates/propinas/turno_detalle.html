@@ -1,0 +1,80 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold"><i class="bi bi-calendar-check me-2" style="color: var(--accent);"></i>Cierre de Turno: {{ turno.fecha }} ({{ turno.get_tipo_display }})</h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card-custom mb-4">
+            <h5 class="fw-bold mb-3">Registrar Personal</h5>
+            <form action="{% url 'agregar_participante' turno.id %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Empleado</label>
+                    {{ form_participante.empleado }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Rol en este turno</label>
+                    {{ form_participante.rol }}
+                </div>
+                <button type="submit" class="btn btn-magnolia w-100">
+                    <i class="bi bi-plus-lg me-2"></i>Añadir al Turno
+                </button>
+            </form>
+        </div>
+
+        <div class="card-custom" style="background-color: var(--bg-surface);">
+            <h5 class="fw-bold mb-3">Resumen Económico</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Fudo (Sistema):</span>
+                <span class="fw-bold">${{ turno.propinas_sistema }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Efectivo:</span>
+                <span class="fw-bold">${{ turno.efectivo }}</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between">
+                <span class="fs-5">Total a Repartir:</span>
+                <span class="fs-5 fw-bold text-success">${{ turno.total_pozo }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-4">Distribución de Propinas</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th>Empleado</th>
+                            <th>Área / Rol</th>
+                            <th class="text-end">Monto Asignado</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in turno.participantes.all %}
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td class="fw-bold">{{ p.empleado.get_full_name|default:p.empleado.username }}</td>
+                            <td><span class="badge" style="background-color: var(--bg-main); color: var(--text-primary);">{{ p.rol.nombre_rol }}</span></td>
+                            <td class="text-end fw-bold fs-5 text-success">${{ p.monto_asignado }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'eliminar_participante' p.id %}" class="text-danger"><i class="bi bi-x-circle"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">Aún no has añadido personal a este turno.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

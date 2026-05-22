@@ -1,0 +1,101 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold m-0">
+        <i class="bi bi-box-seam me-2" style="color: var(--accent);"></i>
+        Catálogo de Insumos (Bodega)
+    </h2>
+    <a href="{% url 'insumo_crear' %}" class="btn btn-magnolia">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Insumo
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="input-group">
+            <span class="input-group-text" style="background-color: var(--bg-surface); border-color: var(--border); color: var(--text-secondary);">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="buscadorInsumos" class="form-control" placeholder="Buscar por nombre..." style="background-color: var(--bg-surface); border-color: var(--border); color: var(--text-primary);">
+        </div>
+    </div>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+        <table class="table align-middle table-hover m-0" id="tablaInsumos">
+            <thead style="position: sticky; top: 0; background-color: var(--bg-surface); z-index: 1;">
+                <tr>
+                    <th>Nombre del Insumo</th>
+                    <th class="text-center">Unidad</th>
+                    <th class="text-end">Stock Actual</th>
+                    <th class="text-end">Costo Unitario</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for insumo in insumos %}
+                <tr>
+                    <td class="fw-bold nombre-insumo">{{ insumo.nombre }}</td>
+                    <td class="text-center">
+                        <span class="badge" style="background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border);">
+                            {{ insumo.get_unidad_medida_display }}
+                        </span>
+                    </td>
+                    <td class="text-end fw-bold {% if insumo.stock_actual <= insumo.alerta_minimo %}text-danger{% else %}text-success{% endif %}">
+                        {{ insumo.stock_actual|floatformat:2|intcomma }}
+                    </td>
+                    <td class="text-end">
+                        ${{ insumo.costo_unitario|intcomma }}
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2 flex-nowrap">
+                            <a href="{% url 'insumo_editar' insumo.pk %}" class="btn-action edit" title="Editar Costo/Stock">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <a href="{% url 'insumo_eliminar' insumo.pk %}" class="btn-action delete" title="Eliminar">
+                                <i class="bi bi-trash3-fill"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        No hay insumos registrados en la bodega.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const buscador = document.getElementById("buscadorInsumos");
+    const filas = document.querySelectorAll("#tablaInsumos tbody tr");
+
+    buscador.addEventListener("keyup", function() {
+        const textoBusqueda = this.value.toLowerCase();
+
+        filas.forEach(fila => {
+            // Buscamos solo en la celda que tiene la clase 'nombre-insumo'
+            const celdaNombre = fila.querySelector(".nombre-insumo");
+            
+            if (celdaNombre) {
+                const nombreInsumo = celdaNombre.textContent.toLowerCase();
+                // Si el nombre incluye lo que escribimos, mostramos la fila, si no, la ocultamos
+                if (nombreInsumo.includes(textoBusqueda)) {
+                    fila.style.display = "";
+                } else {
+                    fila.style.display = "none";
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

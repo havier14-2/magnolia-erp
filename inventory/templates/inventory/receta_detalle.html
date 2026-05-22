@@ -1,0 +1,150 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
+<style>
+    .ts-control, .ts-wrapper.form-select .ts-control {
+        background-color: var(--bg-surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .ts-control > input {
+        color: var(--text-primary) !important;
+    }
+    .ts-control .item {
+        color: var(--text-primary) !important;
+    }
+    .ts-dropdown, .ts-dropdown.form-select {
+        background-color: var(--bg-surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .ts-dropdown .option {
+        color: var(--text-primary) !important;
+    }
+    .ts-dropdown .option.active, .ts-dropdown .option:hover {
+        background-color: var(--bg-main) !important;
+        color: var(--accent) !important;
+    }
+</style>
+
+<div class="mb-4">
+    <a href="{% url 'receta_list' %}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Volver a la carta
+    </a>
+    <h2 class="fw-bold mt-2">
+        <i class="bi bi-egg-fried me-2" style="color: var(--accent);"></i>
+        Escandallo: {{ receta.nombre_producto }}
+    </h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card-custom mb-4">
+            <h5 class="fw-bold mb-3">Añadir / Editar Ingrediente</h5>
+            <form action="{% url 'agregar_ingrediente' receta.id %}" method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Insumo de Bodega</label>
+                    {{ form_ingrediente.insumo }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Cantidad Requerida</label>
+                    {{ form_ingrediente.cantidad_necesaria }}
+                    <div class="form-text text-muted" style="font-size: 0.78em;">
+                        Ingresa el valor basado en la unidad del insumo (ej: gramos, ml o unidades).
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-magnolia w-100">
+                    <i class="bi bi-plus-lg me-2"></i>Asignar a Receta
+                </button>
+            </form>
+        </div>
+
+       <div class="card-custom">
+            <h5 class="fw-bold mb-3">Análisis de Rentabilidad</h5>
+            <div class="d-flex justify-content-between mb-3">
+                <span class="texto-secundario">Costo de Producción:</span>
+                <span class="fw-bold text-danger">${{ receta.costo_total_produccion|floatformat:0|intcomma }}</span>
+            </div>
+
+            <form action="{% url 'actualizar_precio_receta' receta.id %}" method="post" class="mb-3">
+                {% csrf_token %}
+                <label class="form-label small fw-bold texto-secundario mb-1">Precio de Venta (Carta)</label>
+                <div class="input-group">
+                    <span class="input-group-text" style="background-color: var(--bg-main); border-color: var(--border); color: var(--text-secondary);">$</span>
+                    <input type="number" name="precio_venta" value="{{ receta.precio_venta|floatformat:0 }}" class="form-control" style="background-color: var(--bg-main); border-color: var(--border); color: var(--text-primary);" required>
+                    <button class="btn btn-outline-success" type="submit" title="Guardar Precio">
+                        <i class="bi bi-check-lg"></i>
+                    </button>
+                </div>
+            </form>
+
+            <hr style="border-top: 1px solid var(--border);">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fs-5">Margen Neto:</span>
+                <span class="fs-4 fw-bold {% if receta.margen_ganancia > 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ receta.margen_ganancia|floatformat:0|intcomma }}
+                </span>
+            </div>
+        </div>
+
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-4">Ingredientes Configurados</h5>
+            <div class="table-responsive">
+                <table class="table align-middle m-0">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th>Insumo</th>
+                            <th class="text-end">Cantidad Requerida</th>
+                            <th class="text-end">Costo Unitario Base</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in receta.ingredientereceta_set.all|default:ingredientes %}
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td class="fw-bold" style="color: var(--text-primary);">{{ item.insumo.nombre }}</td>
+                            <td class="text-end fw-bold text-info">
+                                {{ item.cantidad_necesaria|floatformat:3 }} 
+                                <small class="texto-secundario">{{ item.insumo.unidad_medida }}</small>
+                            </td>
+                            <td class="text-end texto-secundario">${{ item.insumo.costo_unitario|floatformat:0|intcomma }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'eliminar_ingrediente' item.id %}" class="btn-action delete" title="Quitar ingrediente">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 texto-secundario">
+                                Este producto no consume insumos todavía. Añade ingredientes a la izquierda.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Django le asigna "id_insumo" al <select> del modelo
+    new TomSelect("#id_insumo", {
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        },
+        placeholder: "Busca un insumo..."
+    });
+});
+</script>
+{% endblock %}

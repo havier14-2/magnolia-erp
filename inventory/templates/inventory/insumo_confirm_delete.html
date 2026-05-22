@@ -1,0 +1,26 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card-custom border-danger" style="border-width: 2px;">
+            <div class="text-center mb-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                <h3 class="fw-bold mt-2">¿Eliminar Insumo?</h3>
+                <p class="text-muted">Estás a punto de borrar <strong>{{ object.nombre }}</strong> de la base de datos.</p>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Advertencia:</strong> Al borrar este insumo, <strong>se perderá todo su historial de Kardex</strong> asociado. Si este insumo ya es parte de un escandallo (receta), el sistema no te permitirá borrarlo por seguridad.
+            </div>
+
+            <form method="post" class="d-flex justify-content-center gap-3 mt-4">
+                {% csrf_token %}
+                <a href="{% url 'insumo_list' %}" class="btn btn-secondary px-4">Cancelar</a>
+                <button type="submit" class="btn btn-danger px-4">Sí, eliminar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

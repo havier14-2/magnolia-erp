@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magnolia ERP - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* Paleta Tema Cafetería (Magnolia) - Contrastes Ajustados */
+        :root[data-theme="light"] {
+            --bg-main: #F5F0EB;
+            --bg-surface: #FFFFFF;
+            --text-primary: #2D2522;
+            --text-secondary: #795548;
+            --accent: #2E8B57;
+            --accent-hover: #236c43;
+            --border: #D7CCC8;
+            --sidebar-width: 250px;
+        }
+        
+        :root[data-theme="dark"] {
+            --bg-main: #181514;      /* Un poco más profundo para mejor contraste */
+            --bg-surface: #26211F;   /* Gris cálido oscuro para las tarjetas */
+            --text-primary: #F5F0EB; /* Blanco hueso para que resalte perfecto */
+            --text-secondary: #BCAAA4;
+            --accent: #4CAF50;
+            --accent-hover: #3e8e41;
+            --border: #4E342E;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        /* FIX GENERAL DE TEXTO (Solo a elementos de texto directos para no romper Bootstrap) */
+        h1, h2, h3, h4, h5, h6, p, label {
+            color: var(--text-primary); 
+        }
+
+        /* LAYOUT Y RESPONSIVENESS */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            z-index: 1040;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            width: calc(100% - var(--sidebar-width));
+            transition: all 0.3s ease;
+            /* Evita que elementos invisibles empujen el contenido */
+            display: flex;
+            flex-direction: column; 
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 15px;
+            }
+            .main-content {
+                width: 100%;
+                padding: 15px;
+            }
+        }
+
+        /* COMPONENTES GLOBALES */
+        .card-custom {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            color: var(--text-primary);
+        }
+
+        .table {
+            color: var(--text-primary) !important;
+            --bs-table-color: var(--text-primary) !important;
+            --bs-table-bg: transparent !important;
+        }
+        .table th { color: var(--text-secondary) !important; border-bottom: 2px solid var(--border) !important; }
+        .table td { border-bottom: 1px solid var(--border) !important; color: var(--text-primary) !important; }
+        
+        [data-theme="dark"] .table { background-color: var(--bg-surface) !important; }
+        [data-theme="dark"] .badge { color: #ffffff !important; }
+
+        .btn-magnolia {
+            background-color: var(--accent) !important;
+            color: #ffffff !important;
+            border: none;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+        .btn-magnolia:hover { background-color: var(--accent-hover) !important; transform: translateY(-1px); }
+
+        .theme-switch { cursor: pointer; font-size: 1.5rem; color: var(--accent); }
+        .nav-link { color: var(--text-secondary) !important; font-weight: 500; border-radius: 8px; margin-bottom: 4px; }
+        .nav-link:hover { background-color: rgba(46, 139, 87, 0.1); color: var(--accent) !important; }
+        .nav-link i { color: var(--accent); }
+    </style>
+
+    <script>
+        const savedTheme = localStorage.getItem('magnoliaTheme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="mb-4 fw-bold" style="color: var(--accent);">
+            <i class="bi bi-cup-hot-fill me-2"></i>Magnolia
+        </h4>
+        
+        <ul class="nav flex-column mb-auto">
+            <li class="nav-item">
+                <a href="#" class="nav-link"><i class="bi bi-grid-1x2-fill me-2"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'insumo_list' %}" class="nav-link"><i class="bi bi-box-seam me-2"></i> Inventario</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'receta_list' %}" class="nav-link"><i class="bi bi-journal-bookmark-fill me-2"></i> Escandallos (Recetas)</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'turno_crear' %}" class="nav-link"><i class="bi bi-calculator-fill me-2"></i> Calculadora Propinas</a>
+            </li>
+
+            {% if request.user.is_superuser %}
+                <li class="mt-4 mb-2 ms-3 small text-secondary fw-bold text-uppercase" style="font-size: 0.75rem;">Administración</li>
+                <li class="nav-item">
+                    <a href="{% url 'sincronizar_ventas' %}" class="nav-link text-warning"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Sincronizar Fudo</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'kardex_list' %}" class="nav-link text-danger"><i class="bi bi-clock-history me-2"></i> Kardex (Historial)</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'usuarios_lista' %}" class="nav-link"><i class="bi bi-gear-fill me-2"></i> Personal y Accesos</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'reglas_lista' %}" class="nav-link"><i class="bi bi-cash-coin me-2"></i> Conf. Propinas</a>
+                </li>
+            {% endif %}
+        </ul>
+        <div class="mt-auto px-3 mb-2">
+            <div class="d-flex align-items-center small fw-bold" style="color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <span class="spinner-grow text-success me-2" style="width: 8px; height: 8px; animation-duration: 2s;" role="status"></span>
+                RabbitMQ / Celery Node
+            </div>
+        </div>
+        <hr style="border-color: var(--border);">
+        
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <span style="color: var(--text-secondary); font-weight: 500;">Tema visual</span>
+            <i class="bi bi-moon-stars-fill theme-switch" id="btnSwitchTheme"></i>
+        </div>
+
+        {% if user.is_authenticated %}
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-person-circle fs-3 me-2" style="color: var(--accent);"></i>
+                <div style="line-height: 1.2;">
+                    <strong class="d-block text-truncate" style="color: var(--text-primary); max-width: 150px;">{{ user.username|upper }}</strong>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem;">
+                        {% if user.is_superuser %}Administrador{% else %}Encargado{% endif %}
+                    </small>
+                </div>
+            </div>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100 fw-bold">
+                    <i class="bi bi-box-arrow-left me-1"></i> Cerrar Sesión
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="main-content">
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-check-circle-fill{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const btnSwitch = document.getElementById('btnSwitchTheme');
+            const htmlElement = document.documentElement;
+            
+            if (htmlElement.getAttribute('data-theme') === 'dark') {
+                btnSwitch.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            }
+
+            btnSwitch.addEventListener('click', () => {
+                const isLight = htmlElement.getAttribute('data-theme') === 'light';
+                const newTheme = isLight ? 'dark' : 'light';
+                
+                htmlElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('magnoliaTheme', newTheme);
+                
+                if (newTheme === 'dark') {
+                    btnSwitch.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+                } else {
+                    btnSwitch.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

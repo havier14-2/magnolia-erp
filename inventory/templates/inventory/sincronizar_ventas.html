@@ -1,0 +1,77 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold m-0">
+        <i class="bi bi-cloud-arrow-up-fill me-2" style="color: var(--accent);"></i>
+        Sincronizar Ventas (Fudo)
+    </h2>
+    <p style="color: var(--text-primary); opacity: 0.7;">Sube el reporte diario de Fudo para descontar el inventario automáticamente.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card-custom text-center py-5">
+            <i class="bi bi-file-earmark-spreadsheet text-success mb-3" style="font-size: 4rem;"></i>
+            <h4 class="fw-bold">Carga de Reporte</h4>
+            
+            <p style="color: var(--text-primary); opacity: 0.7;" class="mb-4">Selecciona el archivo Excel o CSV de "Productos Vendidos" exportado desde tu panel de Fudo.</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show text-start" role="alert">
+                        <i class="bi {% if message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-check-circle-fill{% endif %} me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-4 text-start position-relative">
+                    <label class="form-label small fw-bold" style="color: var(--text-primary); opacity: 0.8;">Archivo de Ventas</label>
+                    
+                    <div style="position: absolute; top: 30px; left: 0; width: 100%; height: 50px; opacity: 0; cursor: pointer; z-index: 2;">
+                        {{ form.archivo_ventas }}
+                    </div>
+                    
+                    <div class="form-control d-flex align-items-center justify-content-between" style="height: 50px; background-color: var(--bg-surface); border-color: var(--border); color: var(--text-primary); cursor: pointer; z-index: 1;">
+                        
+                        <span id="nombre-archivo" class="text-truncate" style="color: var(--text-primary); opacity: 0.5;">Ningún archivo seleccionado...</span>
+                        
+                        <span class="btn btn-sm" style="background-color: var(--bg-main); color: var(--accent); border: 1px solid var(--border);">
+                            <i class="bi bi-folder2-open me-1"></i> Explorar
+                        </span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-magnolia w-100 py-2 fs-5">
+                    <i class="bi bi-gear-wide-connected me-2"></i> Procesar Inventario
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputReal = document.getElementById('id_archivo_ventas');
+    const textoFalso = document.getElementById('nombre-archivo');
+
+    if(inputReal) {
+        inputReal.addEventListener('change', function(e) {
+            if(e.target.files.length > 0) {
+                // Al seleccionar archivo, lo ponemos en opacidad máxima para que resalte
+                textoFalso.textContent = e.target.files[0].name;
+                textoFalso.style.opacity = '1'; 
+            } else {
+                // Si cancela, vuelve a estar semi-transparente
+                textoFalso.textContent = 'Ningún archivo seleccionado...';
+                textoFalso.style.opacity = '0.5';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

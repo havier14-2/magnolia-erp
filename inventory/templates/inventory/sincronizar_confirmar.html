@@ -1,0 +1,118 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<style>
+    /* Forzamos que las insignias (badges) tengan texto brillante siempre */
+    .badge-sync {
+        color: #ffffff !important;
+        font-weight: 500;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    /* Clase personalizada para textos secundarios que respeta tu tema */
+    .texto-secundario {
+        color: var(--text-primary) !important;
+        opacity: 0.7;
+    }
+</style>
+
+<div class="mb-4">
+    <a href="{% url 'sincronizar_ventas' %}" class="text-decoration-none small texto-secundario">
+        <i class="bi bi-arrow-left me-1"></i> Cancelar y volver
+    </a>
+    <h2 class="fw-bold mt-2">
+        <i class="bi bi-shield-check me-2" style="color: var(--accent);"></i>
+        Confirmar Sincronización
+    </h2>
+    <p class="texto-secundario">Revisa la proyección. La base de datos aún no ha sido modificada.</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-3"><i class="bi bi-receipt me-2"></i>Ventas Detectadas (Fudo)</h5>
+            <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+                <table class="table align-middle m-0 small">
+                    <thead style="position: sticky; top: 0; background-color: var(--bg-surface);">
+                        <tr>
+                            <th>Producto Fudo</th>
+                            <th class="text-center">Cant.</th>
+                            <th>Emparejamiento (Carta)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venta in ventas %}
+                        <tr>
+                            <td class="texto-secundario">{{ venta.nombre_fudo }}</td>
+                            <td class="text-center fw-bold fs-6" style="color: var(--text-primary);">{{ venta.cantidad|floatformat:0 }}</td>
+                            <td>
+                                {% if venta.estado == 'match' %}
+                                    <span class="badge bg-success bg-opacity-75 badge-sync w-100 text-start text-wrap">
+                                        <i class="bi bi-check-circle me-1"></i> {{ venta.nombre_bd }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger badge-sync w-100 text-start text-wrap shadow-sm" title="No se descontarán insumos de este producto.">
+                                        <i class="bi bi-x-circle me-1"></i> No encontrado (Ignorado)
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card-custom mb-4" style="border: 1px solid var(--accent);">
+            <h5 class="fw-bold mb-3" style="color: var(--accent);"><i class="bi bi-box-seam me-2"></i>Proyección de Descuentos</h5>
+            <div class="table-responsive" style="max-height: 35vh; overflow-y: auto;">
+                <table class="table align-middle m-0 small">
+                    <thead style="position: sticky; top: 0; background-color: var(--bg-surface);">
+                        <tr>
+                            <th>Insumo</th>
+                            <th class="text-end">Stock Actual</th>
+                            <th class="text-end text-danger">A Descontar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for insumo in insumos_proyectados %}
+                        <tr>
+                            <td class="fw-bold" style="color: var(--text-primary);">{{ insumo.nombre }}</td>
+                            <td class="text-end texto-secundario">{{ insumo.stock_actual|floatformat:2 }} <small>{{ insumo.unidad }}</small></td>
+                            <td class="text-end fw-bold text-danger">-{{ insumo.cantidad_total|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 texto-secundario">
+                                Las recetas detectadas no tienen ingredientes configurados. No se descontará nada de la bodega.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-custom text-center" style="background-color: var(--bg-main);">
+            <form method="post">
+                {% csrf_token %}
+                <p class="texto-secundario small mb-3">Al confirmar, se actualizará el stock y se registrarán los movimientos en el Kardex.</p>
+                <button type="submit" class="btn btn-magnolia w-100 py-3 fs-5 fw-bold" {% if not insumos_proyectados %}disabled{% endif %}>
+                    <i class="bi bi-database-check me-2"></i> Confirmar y Descontar Bodega
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

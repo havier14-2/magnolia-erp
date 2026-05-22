@@ -1,0 +1,50 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold m-0"><i class="bi bi-pencil-square me-2" style="color: var(--accent);"></i>Editar Insumo</h2>
+    <p class="text-muted">Actualiza el stock y los costos base.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card-custom">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre del Insumo</label>
+                    {{ form.nombre }}
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Unidad de Medida</label>
+                        {{ form.unidad_medida }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Costo Unitario ($)</label>
+                        {{ form.costo_unitario }}
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Stock Actual</label>
+                        {{ form.stock_actual }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Alerta Stock Mínimo</label>
+                        {{ form.alerta_minimo }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'insumo_list' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-magnolia">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'inventory/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'reglas_lista' %}" class="text-decoration-none" style="color: var(--text-secondary);">
+        <i class="bi bi-arrow-left-short"></i> Volver a la configuración
+    </a>
+    <h2 class="fw-bold mt-2">
+        <i class="bi bi-sliders me-2"></i>
+        {% if form.instance.pk %}Editar Rol{% else %}Crear Nuevo Rol{% endif %}
+    </h2>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card-custom">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold" style="color: var(--text-secondary);">{{ form.nombre_rol.label }}</label>
+                    {{ form.nombre_rol }}
+                    <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.nombre_rol.errors }}</div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">{{ form.porcentaje_am.label }}</label>
+                        {{ form.porcentaje_am }}
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.porcentaje_am.errors }}</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold" style="color: var(--text-secondary);">{{ form.porcentaje_pm.label }}</label>
+                        {{ form.porcentaje_pm }}
+                        <div class="text-danger mt-1" style="font-size: 0.85em;">{{ form.porcentaje_pm.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-4 mt-3 fs-5">
+                    {{ form.activo }}
+                    <label class="form-check-label ms-2" for="{{ form.activo.id_for_label }}">Habilitar este rol en el cálculo</label>
+                </div>
+
+                <hr style="border-color: var(--border);">
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-magnolia px-4 py-2 fw-bold">
+                        <i class="bi bi-save2-fill me-2"></i>Guardar Regla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
