@@ -1,0 +1,1 @@
+worker: celery -A magnolia worker --loglevel=info
