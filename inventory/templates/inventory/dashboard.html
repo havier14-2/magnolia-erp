@@ -1,39 +1,231 @@
 {% extends 'inventory/base.html' %}
+{% load humanize %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">Resumen General</h2>
-    <button class="btn btn-primary" style="background-color: var(--accent); border: none;">
-        <i class="bi bi-cloud-upload me-2"></i>Subir Ventas CSV
-    </button>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card-custom">
-            <h6 class="text-muted">Costo Promedio Insumos</h6>
-            <h3 class="mb-0 fw-bold">$4,500 <small class="text-success" style="font-size: 0.5em;"><i class="bi bi-arrow-down-short"></i>1.2%</small></h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-custom">
-            <h6 class="text-muted">Margen de Ganancia Global</h6>
-            <h3 class="mb-0 fw-bold" style="color: var(--accent);">68.5%</h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-custom">
-            <h6 class="text-muted">Alertas de Stock Min.</h6>
-            <h3 class="mb-0 fw-bold text-danger">3 <small style="font-size: 0.5em;">Insumos</small></h3>
-        </div>
+<div class="mb-3 d-flex justify-content-between align-items-end">
+    <div>
+        <h3 class="fw-bold m-0" style="color: var(--accent);">
+            <i class="bi bi-bar-chart-fill me-2"></i> Inteligencia de Negocios
+        </h3>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card-custom p-3 text-center position-relative overflow-hidden">
+            <div class="position-absolute opacity-25" style="right: -10px; top: -10px; font-size: 5rem; color: var(--accent);">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <h6 class="texto-secundario fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Capital en Bodega</h6>
+            <h2 class="fw-bold mb-0" style="color: var(--text-primary);">${{ kpi_valor_total|floatformat:0|intcomma }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom p-3 text-center position-relative overflow-hidden">
+            <div class="position-absolute opacity-25" style="right: -10px; top: -10px; font-size: 5rem; color: {% if kpi_alertas > 0 %}#dc3545{% else %}#198754{% endif %};">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h6 class="texto-secundario fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Alertas de Quiebre</h6>
+            <h2 class="fw-bold mb-0 {% if kpi_alertas > 0 %}text-danger{% else %}text-success{% endif %}">{{ kpi_alertas }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom p-3 text-center position-relative overflow-hidden">
+            <div class="position-absolute opacity-25" style="right: -10px; top: -10px; font-size: 5rem; color: #0dcaf0;">
+                <i class="bi bi-journal-bookmark"></i>
+            </div>
+            <h6 class="texto-secundario fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Productos en Carta</h6>
+            <h2 class="fw-bold mb-0" style="color: var(--text-primary);">{{ kpi_recetas }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card-custom p-4 h-100">
+            <h6 class="fw-bold mb-3 texto-secundario text-uppercase" style="font-size: 0.85rem;">
+                <i class="bi bi-box-seam me-1"></i> Top 5: Capital Inmovilizado (Insumos)
+            </h6>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="chartCapital"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-5">
+        <div class="card-custom p-4 h-100">
+            <h6 class="fw-bold mb-3 texto-secundario text-uppercase" style="font-size: 0.85rem;">
+                <i class="bi bi-cup-hot me-1"></i> Top 5: Mayor Margen Neto (Carta)
+            </h6>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="chartMargen"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
     <div class="col-12">
-        <div class="card-custom" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
-            <p class="text-muted">Aquí irá el gráfico Chart.js de variabilidad de costos</p>
+        <div class="card-custom p-4">
+            <h6 class="fw-bold mb-3 texto-secundario text-uppercase" style="font-size: 0.85rem;">
+                <i class="bi bi-layers me-1"></i> Análisis de Brecha de Rentabilidad (Precio Venta vs Costo Real)
+            </h6>
+            <div style="position: relative; height: 350px; width: 100%;">
+                <canvas id="chartBrecha"></canvas>
+            </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Configuración global de fuentes para Chart.js
+    Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.color = "#888"; 
+
+    // --------------------------------------------------------
+    // GRÁFICO 1: BARRAS HORIZONTALES (CAPITAL)
+    // --------------------------------------------------------
+    const ctxCapital = document.getElementById('chartCapital').getContext('2d');
+    new Chart(ctxCapital, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_insumos_labels|safe }},
+            datasets: [{
+                label: 'Capital',
+                data: {{ chart_insumos_data|safe }},
+                backgroundColor: 'rgba(46, 139, 87, 0.8)', 
+                borderRadius: 6, 
+                barThickness: 20 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            indexAxis: 'y', 
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            return ' Invertido: $' + context.raw.toLocaleString('es-CL');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Dinero Inmovilizado ($)', font: { weight: 'bold' } },
+                    grid: { color: 'rgba(200, 200, 200, 0.1)' },
+                    ticks: { callback: function(value) { return '$' + value.toLocaleString('es-CL'); } }
+                },
+                y: {
+                    title: { display: true, text: 'Insumo en Bodega', font: { weight: 'bold' } },
+                    grid: { display: false } 
+                }
+            }
+        }
+    });
+
+    // --------------------------------------------------------
+    // GRÁFICO 2: DONA (MÁRGENES NETOS)
+    // --------------------------------------------------------
+    const ctxMargen = document.getElementById('chartMargen').getContext('2d');
+    new Chart(ctxMargen, {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_recetas_labels|safe }},
+            datasets: [{
+                data: {{ chart_recetas_data|safe }},
+                backgroundColor: [
+                    '#2E8B57', '#4CAF50', '#A1887F', '#6D4C41', '#F4A261'  
+                ],
+                borderWidth: 2,
+                borderColor: 'var(--bg-surface)' 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%', 
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { padding: 20, usePointStyle: true } 
+                },
+                tooltip: {
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            return ' Ganancia Neta: $' + context.raw.toLocaleString('es-CL');
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // --------------------------------------------------------
+    // GRÁFICO 3: COMBO CHART (BRECHA DE RENTABILIDAD)
+    // --------------------------------------------------------
+    const ctxBrecha = document.getElementById('chartBrecha').getContext('2d');
+    new Chart(ctxBrecha, {
+        type: 'bar', 
+        data: {
+            labels: {{ chart_brecha_labels|safe }},
+            datasets: [
+                {
+                    type: 'line', 
+                    label: 'Costo de Producción (Food Cost)',
+                    data: {{ chart_brecha_costo|safe }},
+                    borderColor: '#dc3545', 
+                    backgroundColor: '#dc3545',
+                    borderWidth: 3,
+                    tension: 0.4, 
+                    pointRadius: 5,
+                    pointBackgroundColor: '#fff',
+                    fill: false
+                },
+                {
+                    type: 'bar', 
+                    label: 'Precio de Venta al Público',
+                    data: {{ chart_brecha_precio|safe }},
+                    backgroundColor: 'rgba(46, 139, 87, 0.3)', 
+                    borderColor: '#2E8B57',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    mode: 'index', 
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.dataset.label + ': $' + context.raw.toLocaleString('es-CL');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    grid: { display: false } 
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(value) { return '$' + value.toLocaleString('es-CL'); } }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -20,3 +20,7 @@ Thumbs.db
 
 # Media (Imágenes subidas localmente)
 media/
+
+# Reportes de Test
+.coverage
+htmlcov/

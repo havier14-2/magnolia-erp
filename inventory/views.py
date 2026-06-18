@@ -8,6 +8,7 @@ from django.views import View
 from django.db import transaction
 from django.urls import reverse_lazy
 from .forms import InsumoForm
+from .tasks import procesar_archivo_ventas_rabbitmq # Importación de Celery
 import io
 from django.urls import reverse_lazy
 from django.views.generic import ListView, UpdateView, CreateView, DetailView, DeleteView
@@ -29,7 +30,47 @@ from django.views.generic import FormView
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
 
+from django.views.generic import TemplateView
+import json
 
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'inventory/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 1. Traer todos los datos
+        insumos = list(Insumo.objects.all())
+        recetas = list(Receta.objects.all())
+
+        # 2. Calcular KPIs Rápidos
+        valor_total_bodega = sum(i.stock_actual * i.costo_unitario for i in insumos)
+        
+        # Alertas de stock (Asumimos alerta si el stock es menor a 10 unidades/gramos)
+        alertas_stock = sum(1 for i in insumos if i.stock_actual <= 10)
+
+        # 3. Gráfico 1: Top 5 Insumos con Mayor Capital Inmovilizado (stock * costo)
+        top_insumos = sorted(insumos, key=lambda x: x.stock_actual * x.costo_unitario, reverse=True)[:5]
+        context['chart_insumos_labels'] = json.dumps([i.nombre for i in top_insumos])
+        # Convertimos a float para que Javascript/Chart.js pueda leer los Decimales de Python
+        context['chart_insumos_data'] = json.dumps([float(i.stock_actual * i.costo_unitario) for i in top_insumos])
+
+        # 4. Gráfico 2: Top 5 Productos con Mejor Margen de Ganancia
+        top_recetas = sorted(recetas, key=lambda x: x.margen_ganancia, reverse=True)[:5]
+        context['chart_recetas_labels'] = json.dumps([r.nombre_producto for r in top_recetas])
+        context['chart_recetas_data'] = json.dumps([float(r.margen_ganancia) for r in top_recetas])
+        recetas_brecha = sorted(recetas, key=lambda x: x.precio_venta, reverse=True)[:8]
+        context['chart_brecha_labels'] = json.dumps([r.nombre_producto for r in recetas_brecha])
+        context['chart_brecha_precio'] = json.dumps([float(r.precio_venta) for r in recetas_brecha])
+        context['chart_brecha_costo'] = json.dumps([float(r.costo_total_produccion) for r in recetas_brecha])
+
+        # Enviar KPIs a la vista
+        context['kpi_valor_total'] = valor_total_bodega
+        context['kpi_alertas'] = alertas_stock
+        context['kpi_recetas'] = len(recetas)
+
+        return context
+    
 def dashboard(request):
     # Aquí luego inyectaremos los datos de Chart.js y los totales del Kardex
     return render(request, 'inventory/dashboard.html')
