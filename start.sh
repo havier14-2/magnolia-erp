@@ -2,8 +2,6 @@
 # Salir inmediatamente si ocurre un error
 set -o errexit
 
-echo "Ejecutando la siembra de datos para la presentación directamente en Neon..."
-python manage.py seed_demo
 
 echo "Iniciando el Worker de Celery en modo ultraligero (pool=solo)..."
 # --pool=solo evita que Celery clone procesos, ahorrando más de 100MB de RAM.
