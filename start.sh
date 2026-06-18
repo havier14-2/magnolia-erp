@@ -2,10 +2,11 @@
 # Salir inmediatamente si ocurre un error
 set -o errexit
 
-echo "Iniciando el Worker de Celery en segundo plano..."
-# El símbolo '&' al final es la magia: manda el proceso a ejecutarse en la sombra
-celery -A magnolia worker --loglevel=info &
+echo "Iniciando el Worker de Celery en modo ultraligero (pool=solo)..."
+# --pool=solo evita que Celery clone procesos, ahorrando más de 100MB de RAM.
+# --concurrency=1 fuerza a usar un solo hilo.
+celery -A magnolia worker --pool=solo --concurrency=1 --loglevel=info &
 
-echo "Iniciando el Servidor Web Gunicorn..."
-# Este proceso se queda en primer plano manteniendo el servidor vivo
-gunicorn magnolia.wsgi:application
+echo "Iniciando el Servidor Web Gunicorn optimizado..."
+# Forzamos a Gunicorn a usar un solo trabajador web
+gunicorn magnolia.wsgi:application --workers 1 --threads 2
